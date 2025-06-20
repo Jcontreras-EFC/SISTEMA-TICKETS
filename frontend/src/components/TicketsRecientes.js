@@ -244,8 +244,8 @@ const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualiz
           </select>
         </div>
       </div>
-      <div className="w-full overflow-x-auto md:overflow-x-visible">
-        <table className="w-full rounded-xl bg-white/70" style={{tableLayout:'auto', backdropFilter:'blur(2px)', fontFamily: 'Segoe UI, Roboto, Arial, sans-serif'}}>
+      <div className="w-full" style={{maxWidth: '1000px', minWidth: '1000px', margin: '0 auto'}}>
+        <table className="w-full rounded-xl bg-white/70" style={{width: '1000px', maxWidth: '1000px', minWidth: '1000px', tableLayout:'auto', backdropFilter:'blur(2px)', fontFamily: 'Segoe UI, Roboto, Arial, sans-serif'}}>
           <thead>
             <tr className="bg-green-700 text-white">
               <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>N°</th>
@@ -264,7 +264,9 @@ const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualiz
           <tbody>
             {ticketsLocal.length === 0 ? (
               <tr>
-                <td colSpan="12" className="text-center py-4 text-gray-500" style={{fontSize: '14px', textTransform: 'lowercase'}}>No hay tickets registrados.</td>
+                <td colSpan="11" className="text-center py-4 text-gray-500" style={{fontSize: '14px', textTransform: 'lowercase'}}>
+                  No hay tickets registrados.
+                </td>
               </tr>
             ) : (
               ticketsLocal.map((t, i) => (
@@ -329,7 +331,7 @@ const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualiz
                       </span>
                     )}
                   </td>
-                  <td className="px-2 py-2 text-center align-middle break-words whitespace-pre-line" style={{wordBreak:'break-word', fontSize: '14px', textTransform: 'lowercase'}}>{String(t.descripcion).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle break-words whitespace-pre-line" style={{wordBreak:'break-word', fontSize: '14px', textTransform: 'lowercase', maxWidth: 300, whiteSpace: 'pre-line', overflow: 'visible', textOverflow: 'unset'}}>{String(t.descripcion).toLowerCase()}</td>
                 </tr>
               ))
             )}

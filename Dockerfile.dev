@@ -1,0 +1,31 @@
+# ========================================
+# DOCKERFILE DESARROLLO - SISTEMA DE TICKETS
+# ========================================
+# Dockerfile optimizado para desarrollo con hot-reload
+
+FROM node:18-alpine
+
+# Instalar dependencias del sistema necesarias
+RUN apk add --no-cache python3 make g++
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias del backend
+COPY backend/package*.json ./backend/
+
+# Instalar dependencias del backend (incluyendo devDependencies)
+WORKDIR /app/backend
+RUN npm install
+
+# Crear directorio para imágenes de usuarios
+RUN mkdir -p /app/public/Usuarios
+
+# Copiar código fuente del backend
+COPY backend/ .
+
+# Exponer puerto del backend
+EXPOSE 3001
+
+# Comando para desarrollo con nodemon
+CMD ["npm", "run", "dev"] 

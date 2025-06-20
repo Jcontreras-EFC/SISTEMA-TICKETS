@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: tickets_postgres
+    environment:
+      POSTGRES_DB: Tickets
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - tickets_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicación principal (Frontend + Backend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tickets_app
+    ports:
+      - "80:80"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PGHOST=postgres
+      - PGUSER=postgres
+      - PGPASSWORD=123456
+      - PGDATABASE=Tickets
+      - PGPORT=5432
+    volumes:
+      - ./frontend/public/Usuarios:/usr/share/nginx/html/Usuarios
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tickets_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  tickets_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local 

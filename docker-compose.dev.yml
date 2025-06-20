@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL (igual que producción)
+  postgres:
+    image: postgres:15-alpine
+    container_name: tickets_postgres_dev
+    environment:
+      POSTGRES_DB: Tickets
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - tickets_network_dev
+    restart: unless-stopped
+
+  # Backend para desarrollo
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: tickets_backend_dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PGHOST=postgres
+      - PGUSER=postgres
+      - PGPASSWORD=123456
+      - PGDATABASE=Tickets
+      - PGPORT=5432
+    volumes:
+      - ./backend:/app/backend
+      - /app/backend/node_modules
+      - ./frontend/public/Usuarios:/app/public/Usuarios
+    depends_on:
+      - postgres
+    networks:
+      - tickets_network_dev
+    restart: unless-stopped
+    command: npm run dev
+
+  # Frontend para desarrollo
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: tickets_frontend_dev
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./frontend/public/Usuarios:/app/public/Usuarios
+    depends_on:
+      - backend
+    networks:
+      - tickets_network_dev
+    restart: unless-stopped
+    command: npm start
+
+networks:
+  tickets_network_dev:
+    driver: bridge
+
+volumes:
+  pgdata_dev:
+    driver: local 

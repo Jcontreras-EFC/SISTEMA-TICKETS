@@ -40,9 +40,9 @@ const MenuPrincipal = ({ seccion, setSeccion, permisos, usuarioLogueado }) => {
 
   useEffect(() => {
     if (!editando) {
-      fetch('http://localhost:3001/api/tickets/next-id')
+      fetch('http://localhost:3001/api/tickets/next-numero')
         .then(res => res.json())
-        .then(data => setNextId(data.next_id || 1));
+        .then(data => setNextId(data.next_ticket || 1));
     }
   }, [seccion, editando, tickets]);
 

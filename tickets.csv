@@ -1,0 +1,13 @@
+id,fecha,sede,categoria,usuario,asunto,agente,descripcion,hora,prioridad,estado
+22,2025-06-18,Surquillo,Software,ARLIN ORDINOLA,SOPHOS,Jerry Contreras,SOPHOS,12:11 p. m.,Alta,cerrado
+23,2025-06-18,Surquillo,Software,KATTY LOZADA,VPN,Alonso Quispe,PROBLEMAS CON ESCRITORIO REMOTO,04:08 p. m.,Alta,abierto
+24,2025-06-19,Surquillo,Software,SILVIA CASTAÑEDA,IMPRESORA,Alonso Quispe,"PROBLEMAS CON TONER DE IMPRESORA
+",09:53 p. m.,Alta,cerrado
+25,2025-06-19,Chorrillos,Hardware,CESAR CALLALI,OFFICE,Alonso Quispe,LICENCIA DE OFFICE,03:49 p. m.,Media,abierto
+26,2025-06-19,Chorrillos,Redes,YESSIT MONTEAGUDO,SISTEMAS,Alonso Quispe,PROBLEMAS CON SISTEMAS DE FACTURACIÓN,09:55 p. m.,Baja,cerrado
+27,2025-06-19,Surquillo,Hardware,OLENKA RONDON,MOUSE,Jerry Contreras,SE REALIZA PRESTAMO DE MOUSE,10:20 p. m.,Baja,cerrado
+29,2025-06-19,Surquillo,Software,NAYELLY RUIZ,OUTLOOK,Jerry Contreras,"Se realiza back-up de correos
+",01:02 a. m.,Baja,pendiente
+30,2025-06-19,Surquillo,Hardware,Carmen Valenzuela,Office,Jesús Murrugarra,Problemas con licencia de Office,03:22 p. m.,Alta,abierto
+31,2025-06-19,Chorrillos,Redes,Maria Pajares,Problemas de Red,Jesús Murrugarra,Se realiza pruebas de conectividad de red con Switch,03:23 p. m.,Alta,pendiente
+32,2025-06-19,Surquillo,Hardware,German Giraldo,Impresora,Jesús Murrugarra,Problemas con drivers de impresora,03:23 p. m.,Alta,cerrado

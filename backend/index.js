@@ -1,9 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 const ExcelJS = require('exceljs');
 const multer = require('multer');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = 3001;
@@ -11,106 +10,80 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// Inicializar base de datos
-const dbPath = path.resolve(__dirname, 'tickets.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error al conectar con la base de datos:', err.message);
-  } else {
-    console.log('Conectado a la base de datos SQLite.');
-  }
-});
-
-// Crear tabla si no existe
-const createTable = `
-CREATE TABLE IF NOT EXISTS tickets (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  fecha TEXT NOT NULL,
-  sede TEXT NOT NULL,
-  categoria TEXT NOT NULL,
-  usuario TEXT NOT NULL,
-  asunto TEXT NOT NULL,
-  agente TEXT NOT NULL,
-  descripcion TEXT NOT NULL,
-  prioridad TEXT,
-  estado TEXT DEFAULT 'abierto'
-);
-`;
-db.run(createTable);
-
-// Modificar la tabla para agregar el campo 'hora' si no existe
-const addHoraColumn = `ALTER TABLE tickets ADD COLUMN hora TEXT`;
-db.get("PRAGMA table_info(tickets)", (err, row) => {
-  db.all("PRAGMA table_info(tickets)", (err, columns) => {
-    if (!columns.some(col => col.name === 'hora')) {
-      db.run(addHoraColumn, () => {});
-    }
-    if (!columns.some(col => col.name === 'prioridad')) {
-      db.run("ALTER TABLE tickets ADD COLUMN prioridad TEXT", () => {});
-    }
-    if (!columns.some(col => col.name === 'estado')) {
-      db.run("ALTER TABLE tickets ADD COLUMN estado TEXT DEFAULT 'abierto'", () => {});
-    }
-  });
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'Tickets',
+  password: '123456', // Contraseña actualizada
+  port: 5432,
 });
 
 // Endpoint para registrar un ticket
-app.post('/api/tickets', (req, res) => {
+app.post('/api/tickets', async (req, res) => {
   const { fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
   const estadoFinal = (estado || 'abierto').toLowerCase();
-  const sql = `INSERT INTO tickets (fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  db.run(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal], function(err) {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al registrar el ticket.' });
-    }
-    res.json({ mensaje: 'Ticket registrado con éxito.', id: this.lastID });
-  });
+  const sql = `INSERT INTO tickets (fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`;
+  try {
+    const result = await pool.query(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal]);
+    res.json({ mensaje: 'Ticket registrado con éxito.', id: result.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al registrar el ticket.' });
+  }
 });
 
 // Endpoint para obtener todos los tickets
-app.get('/api/tickets', (req, res) => {
-  db.all('SELECT * FROM tickets', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al obtener los tickets.' });
-    }
-    res.json(rows);
-  });
+app.get('/api/tickets', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tickets');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al obtener los tickets.' });
+  }
 });
 
 // Endpoint para eliminar un ticket
-app.delete('/api/tickets/:id', (req, res) => {
+app.delete('/api/tickets/:id', async (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM tickets WHERE id = ?', [id], function(err) {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al eliminar el ticket.' });
-    }
+  try {
+    await pool.query('DELETE FROM tickets WHERE id = $1', [id]);
     res.json({ mensaje: 'Ticket eliminado con éxito.' });
-  });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al eliminar el ticket.' });
+  }
 });
 
 // Endpoint para editar un ticket
-app.put('/api/tickets/:id', (req, res) => {
+app.put('/api/tickets/:id', async (req, res) => {
   const { id } = req.params;
   const { fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
   const estadoFinal = (estado || 'abierto').toLowerCase();
-  const sql = `UPDATE tickets SET fecha = ?, hora = ?, sede = ?, categoria = ?, usuario = ?, asunto = ?, agente = ?, descripcion = ?, prioridad = ?, estado = ? WHERE id = ?`;
-  db.run(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, id], function(err) {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al editar el ticket.' });
-    }
+  const sql = `UPDATE tickets SET fecha = $1, hora = $2, sede = $3, categoria = $4, usuario = $5, asunto = $6, agente = $7, descripcion = $8, prioridad = $9, estado = $10 WHERE id = $11`;
+  try {
+    await pool.query(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, id]);
     res.json({ mensaje: 'Ticket editado con éxito.' });
-  });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al editar el ticket.' });
+  }
 });
 
 // Endpoint para obtener el próximo id autoincremental de tickets
-app.get('/api/tickets/next-id', (req, res) => {
-  db.get("SELECT seq + 1 as next_id FROM sqlite_sequence WHERE name='tickets'", (err, row) => {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al obtener el próximo id.' });
-    }
-    // Si nunca se ha insertado un ticket, next_id será null, así que devolvemos 1
-    res.json({ next_id: row && row.next_id ? row.next_id : 1 });
-  });
+app.get('/api/tickets/next-id', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT nextval('tickets_id_seq') as next_id");
+    res.json({ next_id: result.rows[0].next_id });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al obtener el próximo id.' });
+  }
+});
+
+// Endpoint para obtener el próximo número de ticket consecutivo
+app.get('/api/tickets/next-numero', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) + 1 AS next_ticket FROM tickets');
+    res.json({ next_ticket: result.rows[0].next_ticket });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al obtener el próximo número de ticket.' });
+  }
 });
 
 // Endpoint para exportar tickets a Excel con formato
@@ -119,14 +92,12 @@ app.get('/api/tickets/excel', async (req, res) => {
   let sql = 'SELECT * FROM tickets';
   let params = [];
   if (fechaInicio && fechaFin) {
-    sql += ' WHERE fecha >= ? AND fecha <= ?';
+    sql += ' WHERE fecha >= $1 AND fecha <= $2';
     params = [fechaInicio, fechaFin];
   }
-  db.all(sql, params, async (err, rows) => {
-    if (err) {
-      return res.status(500).json({ mensaje: 'Error al obtener los tickets.' });
-    }
-    console.log('Tickets encontrados:', rows.length, rows);
+  try {
+    const result = await pool.query(sql, params);
+    console.log('Tickets encontrados:', result.rows.length, result.rows);
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Tickets');
@@ -192,7 +163,7 @@ app.get('/api/tickets/excel', async (req, res) => {
     worksheet.autoFilter = 'A7:K7';
     // Insertar los datos a partir de la fila 8 (A8:K...)
     let rowIndex = 8;
-    rows.forEach(row => {
+    result.rows.forEach(row => {
       const fila = [
         row.id,
         row.fecha?.toLowerCase?.() || '',
@@ -277,7 +248,9 @@ app.get('/api/tickets/excel', async (req, res) => {
       console.log('Error generando o enviando el archivo Excel:', error);
       res.status(500).json({ mensaje: 'Error generando el archivo Excel.' });
     }
-  });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al obtener los tickets.' });
+  }
 });
 
 // --- USUARIOS Y PERMISOS ---
@@ -290,14 +263,13 @@ CREATE TABLE IF NOT EXISTS usuarios (
   permisos TEXT NOT NULL -- JSON.stringify de array de permisos
 );
 `;
-db.run(createUsersTable);
 
 // Endpoint: obtener todos los usuarios
 app.get('/api/usuarios', (req, res) => {
-  db.all('SELECT id, usuario, permisos FROM usuarios', [], (err, rows) => {
+  pool.query('SELECT id, usuario, permisos FROM usuarios', [], (err, result) => {
     if (err) return res.status(500).json({ mensaje: 'Error al obtener usuarios.' });
     // Parsear permisos
-    rows = rows.map(u => ({ ...u, permisos: JSON.parse(u.permisos) }));
+    const rows = result.rows.map(u => ({ ...u, permisos: JSON.parse(u.permisos) }));
     res.json(rows);
   });
 });
@@ -305,9 +277,9 @@ app.get('/api/usuarios', (req, res) => {
 app.post('/api/usuarios', (req, res) => {
   const { usuario, clave, permisos } = req.body;
   if (!usuario || !clave || !Array.isArray(permisos)) return res.status(400).json({ mensaje: 'Datos incompletos.' });
-  db.run('INSERT INTO usuarios (usuario, clave, permisos) VALUES (?, ?, ?)', [usuario, clave, JSON.stringify(permisos)], function(err) {
+  pool.query('INSERT INTO usuarios (usuario, clave, permisos) VALUES ($1, $2, $3) RETURNING id', [usuario, clave, JSON.stringify(permisos)], (err, result) => {
     if (err) return res.status(500).json({ mensaje: 'Error al crear usuario.' });
-    res.json({ mensaje: 'Usuario creado', id: this.lastID });
+    res.json({ mensaje: 'Usuario creado', id: result.rows[0].id });
   });
 });
 // Endpoint: editar usuario
@@ -315,18 +287,18 @@ app.put('/api/usuarios/:id', (req, res) => {
   const { usuario, clave, permisos } = req.body;
   if (!usuario || !Array.isArray(permisos)) return res.status(400).json({ mensaje: 'Datos incompletos.' });
   const params = [usuario, JSON.stringify(permisos)];
-  let sql = 'UPDATE usuarios SET usuario = ?, permisos = ?';
-  if (clave) { sql += ', clave = ?'; params.push(clave); }
-  sql += ' WHERE id = ?';
+  let sql = 'UPDATE usuarios SET usuario = $1, permisos = $2';
+  if (clave) { sql += ', clave = $3'; params.push(clave); }
+  sql += ' WHERE id = $4';
   params.push(req.params.id);
-  db.run(sql, params, function(err) {
+  pool.query(sql, params, (err, result) => {
     if (err) return res.status(500).json({ mensaje: 'Error al editar usuario.' });
     res.json({ mensaje: 'Usuario editado' });
   });
 });
 // Endpoint: eliminar usuario
 app.delete('/api/usuarios/:id', (req, res) => {
-  db.run('DELETE FROM usuarios WHERE id = ?', [req.params.id], function(err) {
+  pool.query('DELETE FROM usuarios WHERE id = $1', [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ mensaje: 'Error al eliminar usuario.' });
     res.json({ mensaje: 'Usuario eliminado' });
   });
@@ -337,17 +309,17 @@ app.post('/api/login', (req, res) => {
   usuario = (usuario || '').trim();
   clave = (clave || '').trim();
   console.log('Intento de login:', { usuario, clave });
-  db.get('SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND clave = ?', [usuario, clave], (err, row) => {
+  pool.query('SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER($1) AND clave = $2', [usuario, clave], (err, result) => {
     if (err) {
       console.error('Error en login SQL:', err.message);
       return res.status(500).json({ mensaje: 'Error en login.' });
     }
-    if (!row) {
+    if (!result.rows.length) {
       console.log('Login fallido para:', usuario, 'con clave:', clave);
       return res.status(401).json({ mensaje: 'Usuario o clave incorrectos.' });
     }
-    console.log('Login exitoso para:', usuario, 'Permisos:', row.permisos);
-    res.json({ usuario: row.usuario, permisos: JSON.parse(row.permisos), id: row.id });
+    console.log('Login exitoso para:', usuario, 'Permisos:', result.rows[0].permisos);
+    res.json({ usuario: result.rows[0].usuario, permisos: JSON.parse(result.rows[0].permisos), id: result.rows[0].id });
   });
 });
 
