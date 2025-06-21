@@ -29,6 +29,7 @@ WORKDIR /app/backend
 
 # Copiar archivos de dependencias del backend
 COPY backend/package*.json ./
+RUN npm ci || (ls -l /root/.npm/_logs/ && cat /root/.npm/_logs/*.log ; exit 1)
 
 # Instalar dependencias del backend
 RUN npm ci
