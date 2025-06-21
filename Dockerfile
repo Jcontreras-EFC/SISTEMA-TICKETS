@@ -64,6 +64,7 @@ EXPOSE 80 3001
 # Script de inicio que ejecuta tanto Nginx como el backend
 COPY scripts/start.sh /start.sh
 RUN chmod +x /start.sh
+RUN npm ci || (cat /root/.npm/_logs/* && false)
 
 # Comando de inicio
 CMD ["/start.sh"] 
