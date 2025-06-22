@@ -343,7 +343,6 @@ app.post('/api/usuarios/foto', upload.single('foto'), (req, res) => {
   }
   res.json({ mensaje: 'Imagen subida correctamente.' });
 });
-
-app.listen(PORT, () => {
+app.listen(3001, '0.0.0.0', () => {
   console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
 });
