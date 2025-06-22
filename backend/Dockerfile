@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Comando para arrancar la app (ajusta si el archivo de inicio no es app.js)
-CMD ["node", "app.js"]
+CMD ["node", "index.js"]
