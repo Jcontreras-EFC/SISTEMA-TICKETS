@@ -344,7 +344,6 @@ app.post('/api/usuarios/foto', upload.single('foto'), (req, res) => {
   res.json({ mensaje: 'Imagen subida correctamente.' });
 });
 const PORT = process.env.PORT || 3001;
-
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor backend escuchando en http://0.0.0.0:${PORT}`);
+  console.log(...);
 });
