@@ -337,7 +337,7 @@ const BackupCorreos = () => {
           <h2 className="text-2xl font-bold">Backup de Correos</h2>
         </div>
         {/* Filtros y botones */}
-        <div className="flex flex-row items-start gap-4 mb-6 w-full">
+        <div className="flex flex-row items-end gap-4 mb-6 w-full">
           <div className="flex flex-col md:flex-row gap-2 md:items-end w-full">
             <div className="w-full md:max-w-xs flex-1">
               <label className="block text-xs font-semibold text-gray-700 mb-1">Desde</label>
@@ -351,58 +351,58 @@ const BackupCorreos = () => {
               <label className="block text-xs font-semibold text-gray-700 mb-1">Usuario</label>
               <input type="text" value={filtroUsuario} onChange={e => setFiltroUsuario(e.target.value)} placeholder="Filtrar usuario..." className="p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none w-full" />
             </div>
-            <button onClick={() => cargarBackups()} className="flex items-center justify-center self-end" title="Filtrar">
-              <IconoFiltrar />
-            </button>
+            <div className="flex flex-row gap-2 items-end">
+              <button onClick={() => cargarBackups()} className="flex items-center justify-center" title="Filtrar">
+                <IconoFiltrar />
+              </button>
+              <button onClick={exportarExcel} className="flex items-center justify-center" title="Exportar a Excel">
+                <IconoExcel />
+              </button>
+              <button onClick={imprimirTabla} className="flex items-center justify-center" title="Imprimir o guardar PDF">
+                <IconoImprimir />
+              </button>
+              <button onClick={() => { setEditBackup(null); setShowModal(true); }} className="flex items-center justify-center" title="Agregar Back-up">
+                <IconoAgregar />
+              </button>
+            </div>
           </div>
         </div>
-        {/* Tabla y botones de acción en la misma fila */}
-        <div className="flex flex-row items-start w-full gap-4">
-          <div className="rounded-lg overflow-x-auto flex-1">
-            <table className="table-auto w-full text-xs md:text-sm border border-gray-200">
-              <thead className="bg-blue-600">
-                <tr>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">N° Ticket</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Usuario</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Fecha</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">Hora</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">Agente</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Desde</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Hasta</th>
-                  <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center w-auto min-w-fit whitespace-nowrap">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {backups.map((b, idx) => (
-                  <tr key={b.id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.numero_ticket}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.usuario}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha ? format(new Date(b.fecha), 'dd/MM/yyyy') : ''}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.hora ? (new Date('1970-01-01T' + b.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })) : ''}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.agente}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha_desde ? format(new Date(b.fecha_desde), 'dd/MM/yyyy') : ''}</td>
-                    <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha_hasta ? format(new Date(b.fecha_hasta), 'dd/MM/yyyy') : ''}</td>
-                    <td className="px-0.5 py-2 flex gap-1 justify-center items-center w-auto min-w-fit whitespace-nowrap">
+        {/* Tabla */}
+        <div className="rounded-lg overflow-x-auto flex-1">
+          <table className="table-auto w-full text-xs md:text-sm border border-gray-200">
+            <thead className="bg-blue-600">
+              <tr>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">N° Ticket</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Usuario</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Fecha</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">Hora</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700 w-auto min-w-fit whitespace-nowrap">Agente</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Desde</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center border-r border-blue-700">Hasta</th>
+                <th className="px-0.5 py-2 font-bold text-white uppercase tracking-wider text-center w-auto min-w-fit whitespace-nowrap">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {backups.map((b, idx) => (
+                <tr key={b.id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.numero_ticket}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.usuario}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha ? format(new Date(b.fecha), 'dd/MM/yyyy') : ''}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.hora ? (new Date('1970-01-01T' + b.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })) : ''}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200 w-auto min-w-fit whitespace-nowrap">{b.agente}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha_desde ? format(new Date(b.fecha_desde), 'dd/MM/yyyy') : ''}</td>
+                  <td className="px-0.5 py-2 text-center text-gray-800 border-r border-gray-200">{b.fecha_hasta ? format(new Date(b.fecha_hasta), 'dd/MM/yyyy') : ''}</td>
+                  <td className="px-0.5 py-2 border-r border-gray-200">
+                    <div className="flex justify-center items-center gap-1">
                       <button title="Ver" onClick={() => { setEditBackup(b); setShowModal(true); }}><IconoOjo /></button>
                       <button title="Editar" onClick={() => { setEditBackup(b); setShowModal(true); }}><IconoEditar /></button>
                       <button title="Eliminar" onClick={() => pedirConfirmacionEliminar(b.id)}><IconoEliminar /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-3 mt-2">
-            <button onClick={exportarExcel} className="flex items-center justify-center" title="Exportar a Excel">
-              <IconoExcel />
-            </button>
-            <button onClick={imprimirTabla} className="flex items-center justify-center" title="Imprimir o guardar PDF">
-              <IconoImprimir />
-            </button>
-            <button onClick={() => { setEditBackup(null); setShowModal(true); }} className="flex items-center justify-center" title="Agregar Back-up">
-              <IconoAgregar />
-            </button>
-          </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
       {showModal && (
