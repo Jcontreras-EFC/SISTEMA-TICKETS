@@ -423,7 +423,7 @@ const MenuPrincipal = ({ seccion, setSeccion, permisos, usuarioLogueado }) => {
         </div>
       )}
       {seccion === 'usuarios' && <UsuariosAdmin usuarioLogueado={usuarioLogueado} />}
-      {seccion === 'backup' && <BackupCorreos />}
+      {seccion === 'backup' && <BackupCorreos expanded={sidebarExpanded} />}
       {seccion === 'incidencias' && <FormularioIncidencia />}
     </div>
   );

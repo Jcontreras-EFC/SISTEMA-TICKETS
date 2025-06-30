@@ -12,7 +12,7 @@ const columnas = [
   { key: 'fecha_hasta', label: 'Hasta' },
 ];
 
-const BackupCorreos = () => {
+const BackupCorreos = ({ expanded }) => {
   const [backups, setBackups] = useState([]);
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
@@ -331,14 +331,13 @@ const BackupCorreos = () => {
   };
 
   return (
-    <div className="bg-white w-full h-full flex-1 py-6 rounded-xl shadow-md px-0">
-      <div className="px-12">
-        <div className="flex flex-row items-center justify-between mb-4">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-start justify-start py-8">
+      <div className="bg-white rounded-xl shadow-lg w-full px-4 sm:px-8 md:px-12 py-8 pl-8">
+        <div className="flex flex-row items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Backup de Correos</h2>
         </div>
-        {/* Filtros y botones */}
-        <div className="flex flex-row items-end gap-4 mb-6 w-full">
-          <div className="flex flex-col md:flex-row gap-2 md:items-end w-full">
+        <div className="flex flex-row flex-wrap items-end gap-4 mb-6 w-full">
+          <div className="flex flex-col md:flex-row gap-2 md:items-end flex-1">
             <div className="w-full md:max-w-xs flex-1">
               <label className="block text-xs font-semibold text-gray-700 mb-1">Desde</label>
               <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none w-full" />
@@ -367,8 +366,7 @@ const BackupCorreos = () => {
             </div>
           </div>
         </div>
-        {/* Tabla */}
-        <div className="rounded-lg overflow-x-auto flex-1">
+        <div className="rounded-lg overflow-x-auto">
           <table className="table-auto w-full text-xs md:text-sm border border-gray-200">
             <thead className="bg-blue-600">
               <tr>
