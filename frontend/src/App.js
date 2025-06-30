@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, createContext } from 'react';
 import './index.css';
 import MenuPrincipal from './components/MenuPrincipal';
 import UsuariosAdmin from './components/UsuariosAdmin';
 import Navbar from './components/Navbar';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+
+export const AuthContext = createContext();
 
 function App() {
   const [logueado, setLogueado] = useState(false);
   const [usuario, setUsuario] = useState('');
+  const [nombre, setNombre] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [permisos, setPermisos] = useState([]);
   const [seccion, setSeccion] = useState('dashboard');
+  const navigate = useNavigate();
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    fetch('http://localhost:3001/api/login', {
+    fetch('http://192.168.12.66:3001/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ usuario, clave: contrasena })
@@ -22,12 +29,24 @@ function App() {
       .then(data => {
         if (data && data.usuario) {
           setPermisos(data.permisos || []);
+          setNombre(data.nombre || data.usuario);
           setLogueado(true);
         } else {
           alert('Usuario o contraseña incorrectos.');
         }
       })
       .catch(() => alert('Usuario o contraseña incorrectos.'));
+  };
+
+  // --- FUNCIÓN DE CERRAR SESIÓN ---
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    sessionStorage.clear();
+    setLogueado(false);
+    setPermisos([]);
+    setUsuario('');
+    setContrasena('');
+    navigate('/login');
   };
 
   if (!logueado) {
@@ -78,11 +97,19 @@ function App() {
   }
 
   return (
-    <>
-      <Navbar onSelect={setSeccion} seccion={seccion} permisos={permisos} />
-      {seccion === 'usuarios' && permisos.includes('usuarios') && <UsuariosAdmin />}
-      {seccion !== 'usuarios' && <MenuPrincipal seccion={seccion} setSeccion={setSeccion} permisos={permisos} usuarioLogueado={usuario} />}
-    </>
+    <AuthContext.Provider value={{ user: { nombre, usuario } }}>
+      <div className="bg-gray-100 h-screen w-full font-sans flex flex-row">
+        <Sidebar expanded={sidebarExpanded} setExpanded={setSidebarExpanded} setSeccion={setSeccion} seccion={seccion} />
+        <div className="flex flex-col flex-1 h-full w-full overflow-hidden">
+          <Navbar />
+          <main className="flex-1 min-h-screen w-full bg-gray-100 overflow-auto flex flex-col p-0 m-0">
+            {/* Aquí van los paneles principales y rutas */}
+            {seccion === 'usuarios' && permisos.includes('usuarios') && <UsuariosAdmin usuarioLogueado={usuario} />}
+            {seccion !== 'usuarios' && <MenuPrincipal seccion={seccion} setSeccion={setSeccion} permisos={permisos} usuarioLogueado={usuario} />}
+          </main>
+        </div>
+      </div>
+    </AuthContext.Provider>
   );
 }
 

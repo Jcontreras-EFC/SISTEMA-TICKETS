@@ -24,7 +24,7 @@ const DashboardReportes = () => {
   const [agrupacion, setAgrupacion] = useState('dia'); // 'dia', 'semana', 'mes'
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/tickets')
+    fetch('http://192.168.12.66:3001/api/tickets')
       .then(res => res.json())
       .then(data => setTickets(data));
   }, []);

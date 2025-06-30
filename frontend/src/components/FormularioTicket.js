@@ -9,6 +9,7 @@ const agentes = [
 const sedes = ['Surquillo', 'Chorrillos'];
 const categorias = ['Software', 'Hardware', 'Redes', 'Otros'];
 const prioridades = ['Alta', 'Media', 'Baja'];
+const areas = ['Soporte', 'Redes', 'Sistemas', 'Administración'];
 
 const agentePorUsuario = {
   'Jmurrugarra': 'Jesús Murrugarra',
@@ -16,21 +17,22 @@ const agentePorUsuario = {
   'Aquispe': 'Alonso Quispe',
 };
 
-const FormularioTicket = ({ contador, onRegistrar, fecha: fechaProp, sede: sedeProp, categoria: categoriaProp, usuario: usuarioProp, asunto: asuntoProp, agente: agenteProp, descripcion: descripcionProp, prioridad: prioridadProp, usuarioLogueado }) => {
+const FormularioTicket = ({ contador, onRegistrar, fecha: fechaProp, sede: sedeProp, categoria: categoriaProp, usuario: usuarioProp, asunto: asuntoProp, agente: agenteProp, descripcion: descripcionProp, prioridad: prioridadProp, usuarioLogueado, area: areaProp }) => {
   const [contadorState, setContadorState] = useState(contador);
   const [fecha, setFecha] = useState(fechaProp || new Date().toISOString().slice(0, 10));
   const [sede, setSede] = useState(sedeProp || sedes[0]);
-  const [categoria, setCategoria] = useState(categoriaProp || '');
+  const [categoria, setCategoria] = useState(categoriaProp || 'Software');
   const [usuario, setUsuario] = useState(usuarioProp || '');
   const [asunto, setAsunto] = useState(asuntoProp || '');
   const [exito, setExito] = useState(false);
-  const [prioridad, setPrioridad] = useState(prioridadProp || prioridades[0]);
+  const [prioridad, setPrioridad] = useState(prioridadProp || 'Media');
   const [hora, setHora] = useState(() => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [descripcion, setDescripcion] = useState(descripcionProp || '');
   const [showMenu, setShowMenu] = useState(false);
   const [modal, setModal] = useState(null); // { accion: 'agregar'|'eliminar', tipo: null|'sede'|'categoria'|'prioridad'|'agente' }
   const [nuevoValor, setNuevoValor] = useState('');
   const [opcionEliminar, setOpcionEliminar] = useState('');
+  const [area, setArea] = useState(areaProp || areas[0]);
 
   // Normalizar usuarioLogueado a minúsculas para comparación
   const usuarioKey = (usuarioLogueado || '').toLowerCase();
@@ -48,20 +50,20 @@ const FormularioTicket = ({ contador, onRegistrar, fecha: fechaProp, sede: sedeP
     setContadorState(contador);
     setFecha(fechaProp || new Date().toISOString().slice(0, 10));
     setSede(sedeProp || sedes[0]);
-    setCategoria(categoriaProp || '');
+    setCategoria(categoriaProp || 'Software');
     setUsuario(usuarioProp || '');
     setAsunto(asuntoProp || '');
-    setPrioridad(prioridadProp || prioridades[0]);
-  }, [contador, fechaProp, sedeProp, categoriaProp, usuarioProp, asuntoProp, agenteProp, descripcionProp, prioridadProp]);
+    setPrioridad(prioridadProp || 'Media');
+    setArea(areaProp || areas[0]);
+  }, [contador, fechaProp, sedeProp, categoriaProp, usuarioProp, asuntoProp, agenteProp, descripcionProp, prioridadProp, areaProp]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const horaActual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    // Si el usuario logueado es uno de los agentes, forzar el agente correspondiente SIEMPRE
     const agenteFinal = agentePorUsuarioLower[usuarioKey] || agente;
-    onRegistrar({ fecha, hora: horaActual, sede, categoria, usuario, asunto, agente: agenteFinal, descripcion, prioridad });
+    onRegistrar({ fecha, hora: horaActual, sede, area, categoria, usuario, asunto, agente: agenteFinal, descripcion, prioridad });
     setExito(true);
-    setCategoria(''); setUsuario(''); setAsunto(''); setDescripcion('');
+    setCategoria('Software'); setUsuario(''); setAsunto(''); setDescripcion(''); setArea(areas[0]); setPrioridad('Media');
     setTimeout(() => setExito(false), 2000);
   };
 
@@ -124,206 +126,141 @@ const FormularioTicket = ({ contador, onRegistrar, fecha: fechaProp, sede: sedeP
   };
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        minHeight: '100vh',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: '0',
-        overflow: 'hidden',
-        background: 'linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%)',
-      }}
-    >
-      {/* Imagen de fondo con blur y escala de grises */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: 'url("/tickets.png")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          filter: 'blur(6px) grayscale(0.18)',
-          zIndex: 0,
-        }}
-      />
-      {/* Overlay degradado más notorio */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(120deg, rgba(22,163,74,0.10) 0%, rgba(37,99,235,0.10) 100%)',
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        className="max-w-3xl w-full rounded-3xl shadow-2xl px-10 py-10 mt-8 border border-green-300"
-        style={{
-          background: 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          boxShadow: '0 16px 48px 0 rgba(31, 38, 135, 0.18)',
-          position: 'relative',
-          zIndex: 2,
-          border: '2.5px solid #16a34a',
-        }}
-      >
-        <div className="flex items-center justify-between mb-10">
-          <h2 className="text-4xl font-extrabold text-green-800 text-center tracking-wide drop-shadow-lg uppercase flex-1" style={{letterSpacing:'0.08em', textShadow:'0 2px 8px #b6e7c9'}}>Registrar Ticket</h2>
-          <div className="relative ml-4">
-            <img
-              src="/formulario.png"
-              alt="Agregar o eliminar opciones"
-              className="w-14 h-14 cursor-pointer hover:scale-110 transition-transform drop-shadow-lg"
-              title="Agregar o eliminar opción"
-              onClick={() => setShowMenu(v => !v)}
-              style={{borderRadius:'16px', border:'2px solid #16a34a', background:'#fff'}}
+    <>
+      <form className="w-full flex flex-col pt-0 pb-8 px-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 text-left">Registrar Ticket</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          {/* Nº Ticket */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Nº Ticket</label>
+            <input
+              type="text"
+              value={contadorState}
+              readOnly
+              disabled
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base font-semibold text-gray-700 shadow-sm focus:outline-none"
             />
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-green-200 z-50 animate-fade-in">
-                <button className="block w-full text-left px-5 py-4 hover:bg-green-50 text-green-800 font-bold text-lg" onClick={() => abrirModal('agregar')}>+ Agregar</button>
-                <button className="block w-full text-left px-5 py-4 hover:bg-red-50 text-red-700 font-bold text-lg" onClick={() => abrirModal('eliminar')}>- Eliminar</button>
-              </div>
-            )}
+          </div>
+          {/* Fecha */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha</label>
+            <input
+              type="date"
+              value={fecha}
+              readOnly
+              disabled
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            />
+          </div>
+          {/* Sede */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Sede</label>
+            <select
+              value={sede}
+              onChange={e => setSede(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            >
+              <option>Surquillo</option>
+              <option>Chorrillos</option>
+            </select>
+          </div>
+          {/* Área */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Área</label>
+            <input
+              type="text"
+              value={area}
+              onChange={e => setArea(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            />
+          </div>
+          {/* Categoría */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Categoría</label>
+            <select
+              value={categoria}
+              onChange={e => setCategoria(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            >
+              <option>Software</option>
+              <option>Hardware</option>
+              <option>Redes</option>
+              <option>Otros</option>
+            </select>
+          </div>
+          {/* Prioridad */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Prioridad</label>
+            <select
+              value={prioridad}
+              onChange={e => setPrioridad(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            >
+              <option>Alta</option>
+              <option>Media</option>
+              <option>Baja</option>
+            </select>
+          </div>
+          {/* Usuario */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Usuario</label>
+            <input
+              type="text"
+              value={usuario}
+              onChange={e => setUsuario(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            />
+          </div>
+          {/* Agente */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Agente</label>
+            <input
+              type="text"
+              value={agente}
+              readOnly
+              disabled
+              className="w-full p-2.5 rounded-md border border-gray-300 bg-white text-base font-semibold text-gray-700 focus:outline-none"
+            />
+          </div>
+          {/* Asunto */}
+          <div className="md:col-span-2 lg:col-span-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Asunto</label>
+            <input
+              type="text"
+              value={asunto}
+              onChange={e => setAsunto(e.target.value)}
+              className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none"
+            />
           </div>
         </div>
-        {/* Modal para seleccionar tipo y luego agregar/eliminar */}
-        {modal && !modal.tipo && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-green-400 max-w-sm w-full text-center animate-fade-in">
-              <h3 className="text-2xl font-bold text-green-700 mb-6">¿Qué deseas {modal.accion === 'agregar' ? 'agregar' : 'eliminar'}?</h3>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <button className="bg-green-100 hover:bg-green-200 text-green-900 font-semibold py-3 rounded-lg shadow" onClick={() => setModal(m => ({...m, tipo:'sede'}))}>Sede</button>
-                <button className="bg-green-100 hover:bg-green-200 text-green-900 font-semibold py-3 rounded-lg shadow" onClick={() => setModal(m => ({...m, tipo:'categoria'}))}>Categoría</button>
-                <button className="bg-green-100 hover:bg-green-200 text-green-900 font-semibold py-3 rounded-lg shadow" onClick={() => setModal(m => ({...m, tipo:'prioridad'}))}>Prioridad</button>
-                <button className="bg-green-100 hover:bg-green-200 text-green-900 font-semibold py-3 rounded-lg shadow" onClick={() => setModal(m => ({...m, tipo:'agente'}))}>Agente</button>
-              </div>
-              <button className="mt-2 px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300" onClick={() => setModal(null)}>Cancelar</button>
-            </div>
-          </div>
-        )}
-        {modal && modal.accion === 'agregar' && modal.tipo && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-green-400 max-w-sm w-full text-center animate-fade-in">
-              <h3 className="text-2xl font-bold text-green-700 mb-4">Agregar nueva {modal.tipo.charAt(0).toUpperCase() + modal.tipo.slice(1)}</h3>
-              <input
-                type="text"
-                className="w-full px-4 py-3 border-2 border-green-200 rounded-lg mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-                placeholder={`Ingrese nueva ${modal.tipo}`}
-                value={nuevoValor}
-                onChange={e => setNuevoValor(e.target.value)}
-                autoFocus
-              />
-              <div className="flex justify-center gap-4 mt-2">
-                <button className="bg-green-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-800 transition" onClick={handleAgregar}>Agregar</button>
-                <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition" onClick={() => { setModal(null); setNuevoValor(''); }}>Cancelar</button>
-              </div>
-            </div>
-          </div>
-        )}
-        {modal && modal.accion === 'eliminar' && modal.tipo && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-red-400 max-w-sm w-full text-center animate-fade-in">
-              <h3 className="text-2xl font-bold text-red-700 mb-4">Eliminar {modal.tipo.charAt(0).toUpperCase() + modal.tipo.slice(1)}</h3>
-              <select
-                className="w-full px-4 py-3 border-2 border-red-200 rounded-lg mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-red-400"
-                value={opcionEliminar}
-                onChange={e => setOpcionEliminar(e.target.value)}
-                autoFocus
-              >
-                {(modal.tipo === 'sede' ? sedes : modal.tipo === 'categoria' ? categorias : modal.tipo === 'prioridad' ? prioridades : agentes).map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-              <div className="flex justify-center gap-4 mt-2">
-                <button className="bg-red-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-800 transition" onClick={handleEliminar} disabled={(modal.tipo === 'sede' && sedes.length <= 1) || (modal.tipo === 'categoria' && categorias.length <= 1) || (modal.tipo === 'prioridad' && prioridades.length <= 1) || (modal.tipo === 'agente' && agentes.length <= 1)}>Eliminar</button>
-                <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition" onClick={() => { setModal(null); setOpcionEliminar(''); }}>Cancelar</button>
-              </div>
-            </div>
-          </div>
-        )}
-        <form className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6" onSubmit={handleSubmit}>
+        {/* Cuarta fila: Descripción del problema */}
+        <div className="grid grid-cols-1 gap-6 w-full mt-6">
           <div>
-            <label className="block text-green-900 font-semibold mb-1">N° Ticket</label>
-            <input type="text" value={contadorState} disabled className="mt-1 w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-700 font-bold shadow-sm" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción del problema</label>
+            <textarea
+              value={descripcion}
+              onChange={e => setDescripcion(e.target.value)}
+              className="w-full min-h-[60px] p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none resize-y"
+            />
           </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Fecha</label>
-            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-50 text-gray-700 shadow-sm" required />
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Sede</label>
-            <select value={sede} onChange={e => setSede(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-50 text-gray-700 shadow-sm">
-              {sedes.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Categoría</label>
-            <select value={categoria} onChange={e => setCategoria(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-50 text-gray-700 shadow-sm" required>
-              <option value="">Selecciona una categoría</option>
-              {categorias.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Prioridad</label>
-            <select value={prioridad} onChange={e => setPrioridad(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-50 text-gray-700 shadow-sm" required>
-              {prioridades.map(p => <option key={p}>{p}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Usuario</label>
-            <input type="text" value={usuario} onChange={e => setUsuario(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-700 shadow-sm" required placeholder="Nombre del usuario" />
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Asunto</label>
-            <input type="text" value={asunto} onChange={e => setAsunto(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-700 shadow-sm" required placeholder="Motivo del ticket" />
-          </div>
-          <div>
-            <label className="block text-green-900 font-semibold mb-1">Agente</label>
-            {agentePorUsuarioLower[usuarioKey] ? (
-              <input
-                type="text"
-                value={agentePorUsuarioLower[usuarioKey]}
-                readOnly
-                disabled
-                className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-100 font-bold cursor-not-allowed text-green-900 shadow-sm"
-                style={{fontWeight:'bold'}}
-              />
-            ) : (
-              <select value={agente} onChange={e => setAgente(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-green-50 text-gray-700 shadow-sm">
-                {agentes.map(a => <option key={a}>{a}</option>)}
-              </select>
-            )}
-          </div>
-          <div className="md:col-span-3">
-            <label className="block text-green-900 font-semibold mb-1">Descripción</label>
-            <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-700 shadow-sm" required placeholder="Describe el problema o solicitud..." />
-          </div>
-          <div className="md:col-span-3 flex justify-center mt-2">
-            <button type="submit" className="bg-green-700 text-white py-3 px-10 rounded-xl font-bold shadow-lg hover:bg-green-800 transition text-lg tracking-wide border-2 border-green-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400">
-              Registrar Ticket
-            </button>
-          </div>
-        </form>
-        {exito && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white p-6 rounded shadow text-green-700 text-lg font-bold border border-green-600">
-              ¡Ticket registrado con éxito!
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+        {/* Botones */}
+        <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-end space-x-4 mt-8 w-full">
+          <button
+            type="button"
+            className="bg-white text-gray-700 px-5 py-2 rounded-md font-semibold border border-gray-300 shadow-sm hover:bg-gray-100 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold shadow-sm hover:bg-blue-700 transition"
+          >
+            Enviar
+          </button>
+        </div>
+      </form>
+    </>
   );
 };
 

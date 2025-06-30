@@ -19,7 +19,7 @@ const UsuariosAdmin = ({ usuarioLogueado }) => {
   const [editandoUsuario, setEditandoUsuario] = useState(null);
 
   const fetchUsuarios = () => {
-    fetch('http://localhost:3001/api/usuarios')
+    fetch('http://192.168.12.66:3001/api/usuarios')
       .then(res => res.json())
       .then(data => setUsuarios(data));
   };
@@ -47,14 +47,14 @@ const UsuariosAdmin = ({ usuarioLogueado }) => {
         const data = new FormData();
         data.append('foto', form.foto);
         data.append('usuario', form.usuario);
-        await fetch('http://localhost:3001/api/usuarios/foto', {
+        await fetch('http://192.168.12.66:3001/api/usuarios/foto', {
           method: 'POST',
           body: data
         });
       }
       const url = editId
-        ? `http://localhost:3001/api/usuarios/${editId}`
-        : 'http://localhost:3001/api/usuarios';
+        ? `http://192.168.12.66:3001/api/usuarios/${editId}`
+        : 'http://192.168.12.66:3001/api/usuarios';
       const method = editId ? 'PUT' : 'POST';
       await fetch(url, {
         method,
@@ -84,7 +84,7 @@ const UsuariosAdmin = ({ usuarioLogueado }) => {
 
   const confirmarEliminar = () => {
     if (!usuarioAEliminar) return;
-    fetch(`http://localhost:3001/api/usuarios/${usuarioAEliminar.id}`, { method: 'DELETE' })
+    fetch(`http://192.168.12.66:3001/api/usuarios/${usuarioAEliminar.id}`, { method: 'DELETE' })
       .then(() => {
         fetchUsuarios();
         setModalEliminar(false);
