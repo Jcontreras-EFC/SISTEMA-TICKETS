@@ -3,10 +3,6 @@ const cors = require('cors');
 const ExcelJS = require('exceljs');
 const multer = require('multer');
 const { Pool } = require('pg');
-const path = require('path');
-const { format } = require('date-fns');
-const { utcToZonedTime } = require('date-fns-tz');
-const fs = require('fs');
 
 const app = express();
 const PORT = 3001;
@@ -16,7 +12,7 @@ app.use(express.json());
 
 const pool = new Pool({
   user: 'postgres',
-  host: '192.168.12.66',
+  host: 'localhost',
   database: 'Tickets',
   password: '123456', // Contraseña actualizada
   port: 5432,
@@ -24,16 +20,12 @@ const pool = new Pool({
 
 // Endpoint para registrar un ticket
 app.post('/api/tickets', async (req, res) => {
-  const { fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
+  const { fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
   const estadoFinal = (estado || 'abierto').toLowerCase();
+  const sql = `INSERT INTO tickets (fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`;
   try {
-    // Generar el siguiente número de ticket
-    const result = await pool.query('SELECT COUNT(*) + 1 AS next_ticket FROM tickets');
-    const next = result.rows[0].next_ticket;
-    const numero_ticket = String(next).padStart(6, '0');
-    const sql = `INSERT INTO tickets (fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estado, fecha_cierre, hora_cierre, numero_ticket) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULL, NULL, $12) RETURNING id, numero_ticket`;
-    const insert = await pool.query(sql, [fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, numero_ticket]);
-    res.json({ mensaje: 'Ticket registrado con éxito.', id: insert.rows[0].id, numero_ticket: insert.rows[0].numero_ticket });
+    const result = await pool.query(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal]);
+    res.json({ mensaje: 'Ticket registrado con éxito.', id: result.rows[0].id });
   } catch (err) {
     res.status(500).json({ mensaje: 'Error al registrar el ticket.' });
   }
@@ -63,30 +55,11 @@ app.delete('/api/tickets/:id', async (req, res) => {
 // Endpoint para editar un ticket
 app.put('/api/tickets/:id', async (req, res) => {
   const { id } = req.params;
-  const { fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
+  const { fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estado } = req.body;
   const estadoFinal = (estado || 'abierto').toLowerCase();
-
-  // Obtener la fecha y hora actual si el estado es 'cerrado'
-  let fechaCierre = null;
-  let horaCierre = null;
-  if (estadoFinal === 'cerrado') {
-    const ahora = new Date();
-    const zona = 'America/Lima';
-    const ahoraLima = utcToZonedTime(ahora, zona);
-    fechaCierre = format(ahoraLima, 'yyyy-MM-dd');
-    horaCierre = format(ahoraLima, 'HH:mm');
-  }
-
-  let sql, params;
-  if (estadoFinal === 'cerrado') {
-    sql = `UPDATE tickets SET fecha = $1, hora = $2, sede = $3, area = $4, categoria = $5, usuario = $6, asunto = $7, agente = $8, descripcion = $9, prioridad = $10, estado = $11, fecha_cierre = $12, hora_cierre = $13 WHERE id = $14`;
-    params = [fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, fechaCierre, horaCierre, id];
-  } else {
-    sql = `UPDATE tickets SET fecha = $1, hora = $2, sede = $3, area = $4, categoria = $5, usuario = $6, asunto = $7, agente = $8, descripcion = $9, prioridad = $10, estado = $11 WHERE id = $12`;
-    params = [fecha, hora, sede, area, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, id];
-  }
+  const sql = `UPDATE tickets SET fecha = $1, hora = $2, sede = $3, categoria = $4, usuario = $5, asunto = $6, agente = $7, descripcion = $8, prioridad = $9, estado = $10 WHERE id = $11`;
   try {
-    await pool.query(sql, params);
+    await pool.query(sql, [fecha, hora, sede, categoria, usuario, asunto, agente, descripcion, prioridad, estadoFinal, id]);
     res.json({ mensaje: 'Ticket editado con éxito.' });
   } catch (err) {
     res.status(500).json({ mensaje: 'Error al editar el ticket.' });
@@ -107,9 +80,7 @@ app.get('/api/tickets/next-id', async (req, res) => {
 app.get('/api/tickets/next-numero', async (req, res) => {
   try {
     const result = await pool.query('SELECT COUNT(*) + 1 AS next_ticket FROM tickets');
-    const next = result.rows[0].next_ticket;
-    const numero_ticket = String(next).padStart(6, '0');
-    res.json({ numero_ticket });
+    res.json({ next_ticket: result.rows[0].next_ticket });
   } catch (err) {
     res.status(500).json({ mensaje: 'Error al obtener el próximo número de ticket.' });
   }
@@ -340,13 +311,10 @@ app.post('/api/login', (req, res) => {
   console.log('Intento de login:', { usuario, clave });
   pool.query('SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER($1) AND clave = $2', [usuario, clave], (err, result) => {
     if (err) {
-      const fs = require('fs');
-      fs.appendFileSync('error.log', `[${new Date().toISOString()}] Error en login SQL: ${err.message}\n`);
       console.error('Error en login SQL:', err.message);
       return res.status(500).json({ mensaje: 'Error en login.' });
     }
     if (!result.rows.length) {
-      fs.appendFileSync('error.log', `[${new Date().toISOString()}] Login fallido para: ${usuario}\n`);
       console.log('Login fallido para:', usuario, 'con clave:', clave);
       return res.status(401).json({ mensaje: 'Usuario o clave incorrectos.' });
     }
@@ -355,8 +323,8 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// Configuración de multer para guardar en public/Usuarios (fotos de usuario)
-const storageUsuarios = multer.diskStorage({
+// Configuración de multer para guardar en public/Usuarios
+const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, '../frontend/public/Usuarios'));
   },
@@ -366,165 +334,16 @@ const storageUsuarios = multer.diskStorage({
     cb(null, usuario + '.png');
   }
 });
-const uploadUsuarios = multer({ storage: storageUsuarios });
+const upload = multer({ storage });
 
 // Endpoint para subir foto de usuario
-app.post('/api/usuarios/foto', uploadUsuarios.single('foto'), (req, res) => {
+app.post('/api/usuarios/foto', upload.single('foto'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ mensaje: 'No se subió ninguna imagen.' });
   }
   res.json({ mensaje: 'Imagen subida correctamente.' });
 });
 
-// Endpoint para obtener la lista de sedes distintas
-app.get('/api/sedes', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT DISTINCT sede FROM tickets');
-    const sedes = result.rows.map(row => row.sede);
-    res.json(sedes);
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al obtener las sedes.' });
-  }
-});
-
-// Endpoint para obtener el siguiente número de incidencia
-app.get('/api/incidencias/next-numero', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*) + 1 AS next_numero FROM incidencias');
-    const next = result.rows[0].next_numero;
-    const numero_incidente = String(next).padStart(6, '0');
-    res.json({ numero_incidente });
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al obtener el siguiente número de incidencia.' });
-  }
-});
-
-// Endpoint para registrar una nueva incidencia
-app.post('/api/incidencias', async (req, res) => {
-  const { sede, fecha_inicio, hora_inicio, fecha_fin, hora_fin, descripcion } = req.body;
-  if (!sede || !fecha_inicio || !hora_inicio || !descripcion) {
-    return res.status(400).json({ mensaje: 'Faltan campos obligatorios.' });
-  }
-  try {
-    // Generar el siguiente número de incidencia
-    const result = await pool.query('SELECT COUNT(*) + 1 AS next_numero FROM incidencias');
-    const next = result.rows[0].next_numero;
-    const numero_incidente = String(next).padStart(6, '0');
-    // Insertar la incidencia
-    const sql = `INSERT INTO incidencias (numero_incidente, sede, fecha_inicio, hora_inicio, fecha_fin, hora_fin, descripcion) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`;
-    const insert = await pool.query(sql, [numero_incidente, sede, fecha_inicio, hora_inicio, fecha_fin || null, hora_fin || null, descripcion]);
-    res.json({ mensaje: 'Incidencia registrada con éxito.', id: insert.rows[0].id });
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al registrar la incidencia.' });
-  }
-});
-
-// Configuración de multer para archivos adjuntos de backup
-const uploadBackups = multer({
-  dest: path.join(__dirname, '../uploads'),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
-});
-
-// Endpoint para obtener el siguiente número de ticket de backup
-app.get('/api/backup-correos/next-numero', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*) + 1 AS next_ticket FROM backup_correos');
-    const next = result.rows[0].next_ticket;
-    const numero_ticket = String(next).padStart(6, '0');
-    res.json({ numero_ticket });
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al obtener el próximo número de ticket.' });
-  }
-});
-
-// Endpoint para crear un backup de correo
-app.post('/api/backup-correos', uploadBackups.single('archivo_correo'), async (req, res) => {
-  const { usuario, fecha, hora, descripcion, fecha_desde, fecha_hasta, agente, estado } = req.body;
-  let archivo_correo = null;
-  if (req.file) {
-    archivo_correo = req.file.filename;
-  }
-  try {
-    // Generar el siguiente número de ticket
-    const result = await pool.query('SELECT COUNT(*) + 1 AS next_ticket FROM backup_correos');
-    const next = result.rows[0].next_ticket;
-    const numero_ticket = String(next).padStart(6, '0');
-    const sql = `INSERT INTO backup_correos (numero_ticket, usuario, fecha, hora, descripcion, fecha_desde, fecha_hasta, archivo_correo, agente, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, numero_ticket`;
-    const insert = await pool.query(sql, [numero_ticket, usuario, fecha, hora, descripcion, fecha_desde || null, fecha_hasta || null, archivo_correo, agente || null, estado || 'Activo']);
-    res.json({ mensaje: 'Back-up registrado con éxito.', id: insert.rows[0].id, numero_ticket: insert.rows[0].numero_ticket });
-  } catch (err) {
-    console.error('Error al registrar el back-up:', err);
-    res.status(500).json({ mensaje: 'Error al registrar el back-up.' });
-  }
-});
-
-// Endpoint para listar backups con filtros y paginación
-app.get('/api/backup-correos', async (req, res) => {
-  const { desde, hasta, page = 1, limit = 10 } = req.query;
-  let sql = 'SELECT * FROM backup_correos WHERE 1=1';
-  let params = [];
-  if (desde) {
-    params.push(desde);
-    sql += ` AND fecha >= $${params.length}`;
-  }
-  if (hasta) {
-    params.push(hasta);
-    sql += ` AND fecha <= $${params.length}`;
-  }
-  sql += ' ORDER BY id DESC';
-  // Paginación
-  const offset = (parseInt(page) - 1) * parseInt(limit);
-  sql += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-  params.push(limit, offset);
-  try {
-    const result = await pool.query(sql, params);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al obtener los backups.' });
-  }
-});
-
-// Endpoint para eliminar un backup
-app.delete('/api/backup-correos/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    // Eliminar archivo si existe
-    const result = await pool.query('SELECT archivo_correo FROM backup_correos WHERE id = $1', [id]);
-    if (result.rows.length && result.rows[0].archivo_correo) {
-      const filePath = path.join(__dirname, '../uploads', result.rows[0].archivo_correo);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-    await pool.query('DELETE FROM backup_correos WHERE id = $1', [id]);
-    res.json({ mensaje: 'Back-up eliminado con éxito.' });
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al eliminar el back-up.' });
-  }
-});
-
-// Endpoint para editar un backup (sin cambiar archivo)
-app.put('/api/backup-correos/:id', async (req, res) => {
-  const { id } = req.params;
-  const { usuario, fecha, hora, descripcion, fecha_desde, fecha_hasta, agente, estado } = req.body;
-  try {
-    const sql = `UPDATE backup_correos SET usuario=$1, fecha=$2, hora=$3, descripcion=$4, fecha_desde=$5, fecha_hasta=$6, agente=$7, estado=$8 WHERE id=$9`;
-    await pool.query(sql, [usuario, fecha, hora, descripcion, fecha_desde || null, fecha_hasta || null, agente || null, estado || 'Activo', id]);
-    res.json({ mensaje: 'Back-up actualizado con éxito.' });
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al actualizar el back-up.' });
-  }
-});
-
-// Endpoint para descargar archivo adjunto
-app.get('/api/backup-correos/archivo/:filename', (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join(__dirname, '../uploads', filename);
-  if (fs.existsSync(filePath)) {
-    res.download(filePath);
-  } else {
-    res.status(404).json({ mensaje: 'Archivo no encontrado.' });
-  }
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor backend escuchando en http://192.168.12.66:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
 });

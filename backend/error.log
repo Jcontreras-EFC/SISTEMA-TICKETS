@@ -1,3 +1,0 @@
-[2025-06-23T21:55:55.009Z] Error en login SQL: no hay una l�nea en pg_hba.conf para �192.168.12.66�, usuario �postgres�, base de datos �Tickets�, sin cifrado
-[2025-06-24T19:32:25.554Z] Error en login SQL: connect ECONNREFUSED 192.168.12.66:5432
-[2025-06-24T19:32:27.423Z] Error en login SQL: connect ECONNREFUSED 192.168.12.66:5432

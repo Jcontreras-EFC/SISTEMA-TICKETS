@@ -1,17 +1,31 @@
-import { useContext } from 'react';
-import { FaSignOutAlt } from 'react-icons/fa';
-import { AuthContext } from '../App';
+import React from 'react';
 
-export default function Navbar() {
-  const { user } = useContext(AuthContext); // user: { nombre, usuario }
-  const foto = user?.usuario ? `/Usuarios/${user.usuario}.png` : null;
-  return (
-    <header className="w-full bg-gray-50 h-14 flex items-center justify-end px-6 shadow-sm rounded-b-lg z-30" style={{position:'relative'}}>
-      <span className="mr-2 font-semibold text-gray-700 hidden sm:inline">{user?.nombre}</span>
-      {foto && <img src={foto} alt="Foto de perfil" className="w-12 h-12 rounded-full object-cover border-4 border-gray-300 shadow-lg mr-2" />}
-      <button className="text-gray-500 hover:text-red-500 text-xl">
-        <FaSignOutAlt />
-      </button>
-    </header>
-  );
-}
+const Navbar = ({ onSelect, seccion, permisos = [] }) => (
+  <nav className="flex items-center justify-between bg-green-700 px-6 py-3 shadow text-white">
+    <div className="flex items-center gap-3">
+      <img
+        src="/logo.png"
+        alt="Logo EFC"
+        className="h-12 mr-2"
+        style={{ objectFit: 'contain' }}
+      />
+      <span className="text-xl font-bold tracking-wide">Electro Ferro Centro S.A.C</span>
+    </div>
+    <div className="flex gap-6">
+      {permisos.includes('tickets') && (
+        <button onClick={() => onSelect('tickets')} className={`hover:text-green-200 font-semibold ${seccion === 'tickets' ? 'underline' : ''}`}>Gestión de tickets</button>
+      )}
+      {permisos.includes('base') && (
+        <button onClick={() => onSelect('base')} className={`hover:text-green-200 font-semibold ${seccion === 'base' ? 'underline' : ''}`}>Base de datos</button>
+      )}
+      {permisos.includes('dashboard') && (
+        <button onClick={() => onSelect('dashboard')} className={`hover:text-green-200 font-semibold ${seccion === 'dashboard' ? 'underline' : ''}`}>Dashboards/Reportes</button>
+      )}
+      {permisos.includes('usuarios') && (
+        <button onClick={() => onSelect('usuarios')} className={`hover:text-green-200 font-semibold ${seccion === 'usuarios' ? 'underline' : ''}`}>Administrar usuarios</button>
+      )}
+    </div>
+  </nav>
+);
+
+export default Navbar;

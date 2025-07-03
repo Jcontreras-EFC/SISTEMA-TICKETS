@@ -6,7 +6,7 @@ import { saveAs } from 'file-saver';
 
 const estados = ['abierto', 'pendiente', 'cerrado'];
 
-const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualizar, onSeleccionar, ticketSeleccionado, mostrarAcciones = true, onShowExcelModal, onEditarSuperior, onEliminarSuperior }, ref) => {
+const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualizar, onSeleccionar, ticketSeleccionado, mostrarAcciones = true }, ref) => {
   const [ticketsLocal, setTicketsLocal] = React.useState(tickets);
   const [filtroUsuario, setFiltroUsuario] = React.useState('');
   const [filtroAgente, setFiltroAgente] = React.useState('');
@@ -64,12 +64,12 @@ const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualiz
     // Actualización optimista: cambiamos el estado localmente primero
     setTicketsLocal(prev => prev.map(t => t.id === id ? { ...t, estado: nuevoEstado } : t));
     // Luego actualizamos en el backend
-    fetch(`http://192.168.12.66:3001/api/tickets`)
+    fetch(`http://localhost:3001/api/tickets`)
       .then(res => res.json())
       .then(tickets => {
         const ticket = tickets.find(t => t.id === id);
         if (!ticket) return;
-        fetch(`http://192.168.12.66:3001/api/tickets/${id}`, {
+        fetch(`http://localhost:3001/api/tickets/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...ticket, estado: nuevoEstado })
@@ -188,95 +188,155 @@ const TicketsRecientes = forwardRef(({ tickets, onEditar, onEliminar, onActualiz
   };
 
   return (
-    <div className="mx-auto px-0 flex flex-col justify-start items-center" style={{width: '96vw', minHeight: '300px'}}>
-      <div className="w-full bg-white rounded-2xl shadow-lg border border-green-200 p-6 flex flex-col justify-start items-center" style={{minHeight: '120px', background: '#fff', zIndex: 10, boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)'}}>
-        <div className="relative flex items-center w-full mb-4" style={{minHeight: '56px'}}>
-          {/* Botón Excel a la izquierda */}
-          {mostrarAcciones && (
-            <button className="focus:outline-none rounded-full border-4 border-green-400 bg-gradient-to-br from-green-200 to-green-400 shadow-xl transition-transform duration-200 hover:scale-110 hover:shadow-2xl hover:brightness-110 flex items-center justify-center overflow-hidden absolute left-0" style={{ width: '46px', height: '46px', minWidth: '46px', minHeight: '46px', padding: 0, margin: 0, top: '50%', transform: 'translateY(-50%)' }} title="Exportar a Excel" onClick={onShowExcelModal}><img src="/excel.png" alt="Exportar a Excel" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} /></button>
-          )}
-          {/* Título perfectamente centrado */}
-          <h2 className="text-3xl md:text-4xl font-extrabold text-green-700 uppercase tracking-widest drop-shadow-lg mb-0 mx-auto" style={{letterSpacing:'0.08em', background:'none', border:'none', boxShadow:'none', padding:'0.5rem 0 0.5rem 0', textAlign:'center', width:'100%'}}>TICKETS REGISTRADOS</h2>
-          {/* Botones de acción al extremo derecho */}
-          {mostrarAcciones && (
-            <div className="flex flex-row gap-2 absolute right-0" style={{top: '50%', transform: 'translateY(-50%)'}}>
-              <button className="focus:outline-none rounded-full border-4 border-green-400 bg-gradient-to-br from-green-200 to-green-400 shadow-xl transition-transform duration-200 hover:scale-110 hover:shadow-2xl hover:brightness-110 flex items-center justify-center overflow-hidden" style={{ width: '46px', height: '46px', minWidth: '46px', minHeight: '46px', padding: 0, margin: 0 }} title="Nuevo Ticket" onClick={onEditarSuperior}><img src="/Nuevo_ticket.png" alt="Nuevo Ticket" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} /></button>
-              <button className="focus:outline-none rounded-full border-4 border-blue-400 bg-gradient-to-br from-blue-200 to-blue-400 shadow-xl transition-transform duration-200 hover:scale-110 hover:shadow-2xl hover:brightness-110 flex items-center justify-center overflow-hidden" style={{ width: '46px', height: '46px', minWidth: '46px', minHeight: '46px', padding: 0, margin: 0 }} title="Editar Ticket" onClick={onEditarSuperior}><img src="/editar.png" alt="Editar" style={{ width: '70%', height: '70%', objectFit: 'contain', display: 'block' }} /></button>
-              <button className="focus:outline-none rounded-full border-4 border-red-400 bg-gradient-to-br from-red-200 to-red-400 shadow-xl transition-transform duration-200 hover:scale-110 hover:shadow-2xl hover:brightness-110 flex items-center justify-center overflow-hidden" style={{ width: '46px', height: '46px', minWidth: '46px', minHeight: '46px', padding: 0, margin: 0 }} title="Eliminar Ticket" onClick={onEliminarSuperior}><img src="/eliminar.png" alt="Eliminar" style={{ width: '70%', height: '70%', objectFit: 'contain', display: 'block' }} /></button>
-            </div>
-          )}
+    <div className="inline-block w-auto mx-auto my-8 rounded-2xl shadow-lg bg-white/60 p-2 md:p-6 border border-green-200"
+         style={{backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', boxShadow:'0 2px 16px 0 rgba(22,163,74,0.10)', minWidth: 'min-content', maxWidth: '100vw'}}>
+      {/* Barra de búsqueda profesional */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-2 mb-3 px-1">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto justify-center md:justify-start">
+          {/* Filtro por fecha */}
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={e => setFechaInicio(e.target.value)}
+            className="px-2 py-1 rounded-md border border-green-300 focus:border-green-600 focus:ring-1 focus:ring-green-200 bg-white/70 text-green-900 font-medium placeholder-gray-400 transition w-32 shadow-sm text-sm"
+            placeholder="Fecha inicio"
+            style={{minWidth: 110}}
+          />
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={e => setFechaFin(e.target.value)}
+            className="px-2 py-1 rounded-md border border-green-300 focus:border-green-600 focus:ring-1 focus:ring-green-200 bg-white/70 text-green-900 font-medium placeholder-gray-400 transition w-32 shadow-sm text-sm"
+            placeholder="Fecha fin"
+            style={{minWidth: 110}}
+          />
+          {/* Filtro por sede */}
+          <select
+            value={filtroSede}
+            onChange={e => setFiltroSede(e.target.value)}
+            className="px-2 py-1 rounded-md border border-green-300 focus:border-green-600 focus:ring-1 focus:ring-green-200 bg-white/70 text-green-900 font-medium transition w-36 shadow-sm text-sm"
+            style={{minWidth: 110}}
+          >
+            <option value="">Sede (todas)</option>
+            {sedesUnicas.map(sede => (
+              <option key={sede} value={sede}>{sede}</option>
+            ))}
+          </select>
+          {/* Filtro por usuario y agente (se mantienen) */}
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={filtroUsuario}
+            onChange={e => setFiltroUsuario(e.target.value)}
+            className="px-2 py-1 rounded-md border border-green-300 focus:border-green-600 focus:ring-1 focus:ring-green-200 bg-white/70 text-green-900 font-medium placeholder-gray-400 transition w-36 shadow-sm text-sm"
+            style={{minWidth: 110}}
+          />
+          <select
+            value={filtroAgente}
+            onChange={e => setFiltroAgente(e.target.value)}
+            className="px-2 py-1 rounded-md border border-green-300 focus:border-green-600 focus:ring-1 focus:ring-green-200 bg-white/70 text-green-900 font-medium transition w-36 shadow-sm text-sm"
+            style={{minWidth: 110}}
+          >
+            <option value="">Agente (todos)</option>
+            {agentesUnicos.map(agente => (
+              <option key={agente} value={agente}>{agente}</option>
+            ))}
+          </select>
         </div>
-        <div className="bg-white rounded-xl shadow-md p-4 w-full max-w-6xl mx-auto mt-4">
-          <div className="flex flex-wrap gap-2 mb-4 items-end">
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>PROYECTO</option>
-            </select>
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>PRIORIDAD</option>
-            </select>
-            <input type="date" className="border border-gray-300 rounded px-2 py-1 text-sm" placeholder="INICIO" />
-            <input type="date" className="border border-gray-300 rounded px-2 py-1 text-sm" placeholder="FIN" />
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>ESTADO</option>
-              <option>Pendiente</option>
-              <option>Resuelto</option>
-            </select>
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>TIPO</option>
-              <option>Ticket</option>
-            </select>
-            <button className="bg-blue-700 text-white px-6 py-2 rounded font-semibold shadow hover:bg-blue-800 transition">Procesar</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg">
-              <thead>
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Asunto</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Proyecto</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Tipo</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Categoría</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Prioridad</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Estado</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Fecha</th>
-                  <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">Última Actualización</th>
+      </div>
+      <div className="w-full" style={{maxWidth: '1000px', minWidth: '1000px', margin: '0 auto'}}>
+        <table className="w-full rounded-xl bg-white/70" style={{width: '1000px', maxWidth: '1000px', minWidth: '1000px', tableLayout:'auto', backdropFilter:'blur(2px)', fontFamily: 'Segoe UI, Roboto, Arial, sans-serif'}}>
+          <thead>
+            <tr className="bg-green-700 text-white">
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>N°</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Fecha</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Hora</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Sede</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Categoría</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Usuario</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Asunto</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Agente</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Prioridad</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Estado</th>
+              <th className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'uppercase'}}>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ticketsLocal.length === 0 ? (
+              <tr>
+                <td colSpan="11" className="text-center py-4 text-gray-500" style={{fontSize: '14px', textTransform: 'lowercase'}}>
+                  No hay tickets registrados.
+                </td>
+              </tr>
+            ) : (
+              ticketsLocal.map((t, i) => (
+                <tr
+                  key={t.id || i}
+                  className={`border-b transition-colors duration-200${ticketSeleccionado && ticketSeleccionado.id === t.id ? ' ring-2 ring-green-600' : ''}`}
+                  style={{ background: '#fff', verticalAlign: 'middle', cursor: 'pointer' }}
+                  onDoubleClick={() => handleRowDoubleClick(t)}
+                >
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.id).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle whitespace-nowrap" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.fecha).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle whitespace-nowrap" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.hora || '-').toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.sede).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.categoria).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'capitalize'}}>{String(t.usuario).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.asunto).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'capitalize'}}>{String(t.agente).toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{fontSize: '14px', textTransform: 'lowercase'}}>{String(t.prioridad || '-').toLowerCase()}</td>
+                  <td className="px-2 py-2 text-center align-middle" style={{ minWidth: 110, fontSize: '14px', textTransform: 'lowercase', background: '#fff' }}>
+                    {editandoEstadoId === t.id ? (
+                      <select
+                        ref={el => selectEstadoRefs.current[t.id] = el}
+                        value={t.estado || 'abierto'}
+                        onChange={e => { handleEstadoChange(t.id, e.target.value); setEditandoEstadoId(null); }}
+                        onBlur={() => setEditandoEstadoId(null)}
+                        autoFocus
+                        className="w-full font-bold text-center focus:outline-none shadow-sm"
+                        style={{
+                          background: (t.estado === 'pendiente') ? '#facc15' : (t.estado === 'abierto') ? '#16a34a' : '#64748b',
+                          color: (t.estado === 'pendiente') ? '#92400e' : '#fff',
+                          border: 'none',
+                          textAlign: 'center',
+                          letterSpacing: '0.5px',
+                          cursor: String(t.estado).toLowerCase() === 'cerrado' ? 'not-allowed' : 'pointer',
+                          padding: '8px 0',
+                          minWidth: 90,
+                          transition: 'background 0.2s, color 0.2s',
+                          fontSize: '14px',
+                          textTransform: 'lowercase',
+                          borderRadius: '10px',
+                        }}
+                        disabled={String(t.estado).toLowerCase() === 'cerrado'}
+                      >
+                        {estados.map(e => <option key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</option>)}
+                      </select>
+                    ) : (
+                      <span
+                        className={
+                          t.estado === 'pendiente'
+                            ? 'px-4 py-1 rounded-lg font-bold text-yellow-900 bg-yellow-300 shadow-sm'
+                            : t.estado === 'abierto'
+                            ? 'px-4 py-1 rounded-lg font-bold text-white bg-green-500 shadow-sm'
+                            : t.estado === 'cerrado'
+                            ? 'px-4 py-1 rounded-lg font-bold text-white bg-slate-500 shadow-sm'
+                            : 'px-4 py-1 rounded-lg font-bold bg-gray-200 text-gray-700 shadow-sm'
+                        }
+                        style={{ display: 'inline-block', minWidth: 110, maxWidth: 110, minHeight: 32, lineHeight: '32px', textAlign: 'center', fontSize: '14px', textTransform: 'lowercase', letterSpacing: '0.5px', cursor: String(t.estado).toLowerCase() !== 'cerrado' ? 'pointer' : 'not-allowed', verticalAlign: 'middle' }}
+                        onClick={() => { if (String(t.estado).toLowerCase() !== 'cerrado') setEditandoEstadoId(t.id); }}
+                        title={String(t.estado).toLowerCase() !== 'cerrado' ? 'Haz clic para cambiar el estado' : ''}
+                      >
+                        {t.estado}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-2 py-2 text-center align-middle break-words whitespace-pre-line" style={{wordBreak:'break-word', fontSize: '14px', textTransform: 'lowercase', maxWidth: 300, whiteSpace: 'pre-line', overflow: 'visible', textOverflow: 'unset'}}>{String(t.descripcion).toLowerCase()}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {ticketsLocal.map((t, i) => (
-                  <tr key={t.id || i} className="border-b border-gray-200 hover:bg-gray-50" style={{ verticalAlign: 'middle', cursor: 'pointer', transition: 'background 0.2s' }} onDoubleClick={() => handleRowDoubleClick(t)}>
-                    <td className="px-2 py-2 text-left align-middle text-sm">{String(t.asunto)}</td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">{String(t.proyecto)}</td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">{String(t.tipo)}</td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">{String(t.categoria)}</td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">
-                      <span className={
-                        t.prioridad === 'alta' ? 'bg-blue-200 text-blue-800 px-2 py-1 rounded font-semibold text-xs' :
-                        t.prioridad === 'media' ? 'bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-xs' :
-                        t.prioridad === 'baja' ? 'bg-blue-50 text-blue-600 px-2 py-1 rounded font-semibold text-xs' :
-                        'bg-gray-100 text-gray-700 px-2 py-1 rounded font-semibold text-xs'
-                      }>{t.prioridad ? t.prioridad.charAt(0).toUpperCase() + t.prioridad.slice(1) : '-'}</span>
-                    </td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">
-                      <span className={
-                        t.estado === 'nuevo' ? 'bg-sky-200 text-sky-800 px-2 py-1 rounded font-semibold text-xs' :
-                        t.estado === 'pendiente' ? 'bg-yellow-200 text-yellow-800 px-2 py-1 rounded font-semibold text-xs' :
-                        t.estado === 'abierto' ? 'bg-green-200 text-green-800 px-2 py-1 rounded font-semibold text-xs' :
-                        t.estado === 'cerrado' ? 'bg-gray-300 text-gray-800 px-2 py-1 rounded font-semibold text-xs' :
-                        'bg-gray-100 text-gray-700 px-2 py-1 rounded font-semibold text-xs'
-                      }>{t.estado ? t.estado.charAt(0).toUpperCase() + t.estado.slice(1) : '-'}</span>
-                    </td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">{String(t.fecha)}</td>
-                    <td className="px-2 py-2 text-left align-middle text-sm">
-                      {t.ultima_actualizacion
-                        ? format(parseISO(t.ultima_actualizacion), 'dd/MM/yyyy', { locale: es })
-                        : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

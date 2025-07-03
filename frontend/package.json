@@ -23,7 +23,7 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "cross-env HOST=192.168.12.66 react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
