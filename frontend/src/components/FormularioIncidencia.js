@@ -34,49 +34,32 @@ const FormularioIncidencia = ({ onCancelar }) => {
   );
 
   return (
-    <form className="w-full max-w-lg md:max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha de Inicio</label>
-        <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none" />
+    <div className="pl-8">
+      <h1 className="text-2xl font-bold mb-4">Incidencias</h1>
+      <div className="overflow-x-auto">
+        <table className="w-full max-w-[1230px]">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="px-4 py-2">Columna 1</th>
+              <th className="px-4 py-2">Columna 2</th>
+              <th className="px-4 py-2">Columna 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="odd:bg-white even:bg-blue-50">
+              <td className="px-4 py-2">Dato 1</td>
+              <td className="px-4 py-2">Dato 2</td>
+              <td className="px-4 py-2">Dato 3</td>
+            </tr>
+            <tr className="odd:bg-white even:bg-blue-50">
+              <td className="px-4 py-2">Dato 4</td>
+              <td className="px-4 py-2">Dato 5</td>
+              <td className="px-4 py-2">Dato 6</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Hora de Inicio</label>
-        <input type="text" placeholder="Ejemplo: 09:00" value={horaInicio} onChange={e => setHoraInicio(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none" maxLength={5} pattern="^(0[1-9]|1[0-2]):[0-5][0-9]$" />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">AM/PM</label>
-        <select value={ampmInicio} onChange={e => setAmpmInicio(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none">
-          {ampmOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha de Fin</label>
-        <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none" />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Hora de Fin</label>
-        <input type="text" placeholder="Ejemplo: 10:30" value={horaFin} onChange={e => setHoraFin(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none" maxLength={5} pattern="^(0[1-9]|1[0-2]):[0-5][0-9]$" />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">AM/PM</label>
-        <select value={ampmFin} onChange={e => setAmpmFin(e.target.value)} className="w-full p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none">
-          {ampmOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="md:col-span-2">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción de la Incidencia</label>
-        <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Describa la incidencia o problema con el mayor detalle posible" className="w-full min-h-[60px] p-2 rounded-md border border-gray-300 bg-white text-base text-gray-700 shadow-sm focus:outline-none resize-y" />
-      </div>
-      {/* Botones */}
-      <div className="col-span-1 md:col-span-2 flex justify-end space-x-4 mt-8 w-full">
-        <button type="button" onClick={onCancelar} className="flex items-center justify-center" disabled={cargando} title="Cancelar">
-          <IconoCancelar />
-        </button>
-        <button type="submit" className="flex items-center justify-center" disabled={cargando} title={cargando ? 'Guardando...' : 'Guardar'}>
-          <IconoGuardar />
-        </button>
-      </div>
-    </form>
+    </div>
   );
 };
 

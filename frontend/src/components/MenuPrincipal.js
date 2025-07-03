@@ -200,14 +200,13 @@ const MenuPrincipal = ({ seccion, setSeccion, permisos, usuarioLogueado }) => {
               onRegistrar={handleRegistrar}
               usuarioLogueado={usuarioLogueado}
               {...(editando ? { ...editando } : {})}
+              sidebarExpanded={sidebarExpanded}
             />
           </div>
         </main>
       )}
       {seccion === 'base' && (
-        <div
-          className="flex items-start justify-center min-h-screen relative"
-        >
+        <div className="flex items-start justify-start min-h-screen relative">
           {/* Fondo con desenfoque y overlay */}
           <div
             style={{
